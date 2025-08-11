@@ -179,7 +179,13 @@ class MockLanguageModelService(LanguageModelInterface):
             # Generate different types of responses based on question keywords
             question_lower = question.lower()
             
-            if "summarize" in question_lower or "summary" in question_lower:
+            # Handle "main topics" or "topics" questions
+            if "main topic" in question_lower or "topics" in question_lower:
+                # Extract key topics from context
+                topics = self._extract_topics_from_context(context)
+                return f"Based on the document content, the main topics include: {topics}"
+            
+            elif "summarize" in question_lower or "summary" in question_lower:
                 return f"Here's a comprehensive summary of the key information: {context[:300]}..."
             
             elif "compare" in question_lower or "difference" in question_lower:
@@ -198,6 +204,46 @@ class MockLanguageModelService(LanguageModelInterface):
                 return f"Based on the document content, I can provide the following information: {context[:300]}..."
         
         return "I found relevant information but need more context to provide a specific answer."
+    
+    def _extract_topics_from_context(self, context: str) -> str:
+        """
+        Extract main topics from the context text.
+        
+        Args:
+            context: Context text to analyze
+            
+        Returns:
+            Extracted topics as a string
+        """
+        # Simple topic extraction based on common patterns
+        topics = []
+        
+        # Look for common topic indicators
+        if "abstract" in context.lower():
+            topics.append("Abstract guidelines and formatting")
+        if "table of contents" in context.lower():
+            topics.append("Document structure and organization")
+        if "bsc" in context.lower() or "degree" in context.lower():
+            topics.append("BSc degree program requirements")
+        if "ai" in context.lower() or "artificial intelligence" in context.lower():
+            topics.append("Artificial Intelligence curriculum")
+        if "guidelines" in context.lower():
+            topics.append("Academic guidelines and standards")
+        if "report" in context.lower():
+            topics.append("Report writing and submission")
+        
+        # If no specific topics found, extract key phrases
+        if not topics:
+            # Look for capitalized phrases that might be topics
+            import re
+            potential_topics = re.findall(r'\b[A-Z][a-zA-Z\s]{3,}\b', context)
+            if potential_topics:
+                topics = potential_topics[:3]  # Take first 3 potential topics
+        
+        if topics:
+            return ", ".join(topics)
+        else:
+            return "Document structure, academic guidelines, and program requirements"
 
 
 class LanguageModelService:

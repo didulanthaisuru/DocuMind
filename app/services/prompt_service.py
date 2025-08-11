@@ -166,7 +166,12 @@ class PromptService:
         Returns:
             Formatted source information
         """
-        filename = chunk.get('filename', 'Unknown')
+        # Try multiple possible filename fields
+        filename = (chunk.get('filename') or 
+                   chunk.get('document_title') or 
+                   chunk.get('title') or 
+                   f"Document {chunk.get('document_id', 'Unknown')}")
+        
         page = chunk.get('page')
         score = chunk.get('similarity_score', 0)
         
@@ -191,9 +196,11 @@ Instructions:
 1. Answer the question based ONLY on the information provided in the context above.
 2. If the context doesn't contain enough information to answer the question, say "I don't have enough information to answer this question."
 3. Be concise but comprehensive in your response.
-4. If you reference specific information, mention the source.
-5. Keep your answer under {max_length} characters.
-6. Be accurate and avoid making up information not present in the context.
+4. Provide a clear, structured answer that directly addresses the question.
+5. If you reference specific information, mention the source.
+6. Keep your answer under {max_length} characters.
+7. Be accurate and avoid making up information not present in the context.
+8. For questions about topics or content, identify and list the main themes or subjects discussed.
 
 Answer:"""
     
@@ -453,6 +460,16 @@ Answer:"""
         
         # Remove common LLM artifacts
         answer = re.sub(r'^(Answer:|Response:|Based on the context,?|According to the context,?)', '', answer, flags=re.IGNORECASE)
+        
+        # Fix incomplete sentences that end with ellipsis or are cut off
+        if answer.endswith('...'):
+            # Try to complete the sentence or remove the ellipsis
+            answer = answer[:-3].strip()
+        
+        # If the answer is very short or seems incomplete, try to improve it
+        if len(answer) < 50 and not answer.endswith(('.', '!', '?')):
+            # Add a more complete ending
+            answer += " based on the available context."
         
         # Ensure proper sentence ending
         if answer and not answer.endswith(('.', '!', '?')):

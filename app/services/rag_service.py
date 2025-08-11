@@ -130,10 +130,13 @@ class RAGService:
                     processing_time=time.time() - start_time
                 )
             
+            # Enrich context results with document information
+            enriched_context = self._enrich_context_results(results_metadata)
+            
             # Generate answer from retrieved context
             answer, confidence = self._generate_answer(
                 query_request.question, 
-                results_metadata
+                enriched_context
             )
             
             # Prepare source information
@@ -242,6 +245,35 @@ class RAGService:
             # Fallback to simple answer generation
             return self._generate_simple_answer(prompt, question)
     
+    def _enrich_context_results(self, results_metadata: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Enrich context results with full document information.
+        
+        Args:
+            results_metadata: Raw metadata from vector search
+            
+        Returns:
+            Enriched context results with document details
+        """
+        enriched_results = []
+        
+        for result in results_metadata:
+            # Get full document information
+            document = self.document_service.get_document(result.get('document_id'))
+            
+            # Create enriched result
+            enriched_result = result.copy()
+            if document:
+                enriched_result['filename'] = document.filename
+                enriched_result['document_title'] = getattr(document, 'title', document.filename)
+            else:
+                enriched_result['filename'] = f"Document {result.get('document_id', 'Unknown')}"
+                enriched_result['document_title'] = enriched_result['filename']
+            
+            enriched_results.append(enriched_result)
+        
+        return enriched_results
+
     def _generate_simple_answer(self, prompt: str, question: str) -> str:
         """
         Generate a simple answer when LLM is not available.
