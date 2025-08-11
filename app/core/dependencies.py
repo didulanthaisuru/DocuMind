@@ -4,6 +4,7 @@ from ..services.embedding_service import EmbeddingService
 from ..services.vector_service import VectorStoreService
 from ..services.document_service import DocumentService
 from ..services.rag_service import RAGService
+from ..services.prompt_service import PromptService, PromptConfig
 from ..utils.file_handler import FileHandler
 from ..utils.text_processor import TextProcessor
 
@@ -54,10 +55,24 @@ def get_document_service() -> DocumentService:
     )
 
 @lru_cache()
+def get_prompt_config() -> PromptConfig:
+    """Get prompt configuration from settings."""
+    return PromptConfig(
+        max_context_length=settings.MAX_CONTEXT_LENGTH,
+        max_answer_length=settings.MAX_ANSWER_LENGTH,
+        temperature=settings.PROMPT_TEMPERATURE,
+        include_sources=settings.ENABLE_CITATIONS,
+        confidence_threshold=settings.CONFIDENCE_THRESHOLD,
+        enable_citations=settings.ENABLE_CITATIONS
+    )
+
+@lru_cache()
 def get_rag_service() -> RAGService:
     """Get singleton RAG service instance."""
     return RAGService(
         embedding_service=get_embedding_service(),
         vector_service=get_vector_service(),
-        document_service=get_document_service()
+        document_service=get_document_service(),
+        prompt_config=get_prompt_config(),
+        language_model_provider=settings.LANGUAGE_MODEL_PROVIDER
     ) 

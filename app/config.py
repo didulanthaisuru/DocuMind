@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # === Model Configuration ===
     EMBEDDING_MODEL: str = "sentence-transformers/all-mpnet-base-v2"
     GENERATION_MODEL: str = "microsoft/DialoGPT-medium"
+    LANGUAGE_MODEL_PROVIDER: str = "mock"  # "openai", "huggingface", "mock"
     USE_GPU: bool = False
     DEVICE: str = "cuda" if USE_GPU else "cpu"
     
@@ -35,6 +36,14 @@ class Settings(BaseSettings):
     # === Retrieval Settings ===
     TOP_K_RESULTS: int = 5
     SIMILARITY_THRESHOLD: float = 0.7
+    
+    # === Prompt Settings ===
+    MAX_CONTEXT_LENGTH: int = 4000
+    MAX_ANSWER_LENGTH: int = 1000
+    PROMPT_TEMPERATURE: float = 0.7
+    ENABLE_CITATIONS: bool = True
+    CONFIDENCE_THRESHOLD: float = 0.5
+    AUTO_DETECT_PROMPT_TYPE: bool = True
     
     # === File Paths ===
     BASE_DIR: Path = Path(__file__).parent.parent

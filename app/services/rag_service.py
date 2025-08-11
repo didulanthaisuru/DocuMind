@@ -4,6 +4,8 @@ from ..models.query import QueryRequest, QueryResponse, SourceInfo
 from ..services.embedding_service import EmbeddingService
 from ..services.vector_service import VectorStoreService
 from ..services.document_service import DocumentService
+from ..services.prompt_service import PromptService, PromptConfig, PromptType
+from ..services.language_model_service import LanguageModelService
 from ..core.exceptions import QueryError
 from ..utils.logger import setup_logger
 from ..models.document import DocumentStatus
@@ -16,7 +18,9 @@ class RAGService:
     
     def __init__(self, embedding_service: EmbeddingService, 
                  vector_service: VectorStoreService, 
-                 document_service: DocumentService):
+                 document_service: DocumentService,
+                 prompt_config: Optional[PromptConfig] = None,
+                 language_model_provider: str = "mock"):
         """
         Initialize RAG service with required components.
         
@@ -24,10 +28,14 @@ class RAGService:
             embedding_service: Service for generating embeddings
             vector_service: Service for vector storage and search
             document_service: Service for document management
+            prompt_config: Configuration for prompt generation
+            language_model_provider: Language model provider to use
         """
         self.embedding_service = embedding_service
         self.vector_service = vector_service
         self.document_service = document_service
+        self.prompt_service = PromptService(prompt_config)
+        self.language_model = LanguageModelService(provider=language_model_provider)
         self.logger = setup_logger(self.__class__.__name__)
     
     def process_document(self, document_id: str) -> bool:
@@ -163,10 +171,7 @@ class RAGService:
     
     def _generate_answer(self, question: str, context_results: List[Dict[str, Any]]) -> tuple[str, float]:
         """
-        Generate an answer based on the question and retrieved context.
-        
-        This is a simplified implementation. In production, you might want to use
-        a language model like GPT, T5, or other text generation models.
+        Generate an answer based on the question and retrieved context using sophisticated prompt engineering.
         
         Args:
             question: User question
@@ -176,23 +181,123 @@ class RAGService:
             Tuple of (answer, confidence_score)
         """
         if not context_results:
-            return "No relevant information found.", 0.0
+            return "I couldn't find any relevant information to answer your question.", 0.0
         
-        # Simple extractive approach - return most relevant chunk(s)
-        # In production, implement proper text generation here
+        try:
+            # Determine the best prompt type based on the question
+            prompt_type = self.prompt_service.determine_prompt_type(question)
+            
+            # Generate the prompt
+            prompt = self.prompt_service.generate_prompt(
+                question=question,
+                context_results=context_results,
+                prompt_type=prompt_type
+            )
+            
+            # Generate answer using the language model
+            # Note: This is where you would integrate with your chosen LLM
+            # For now, we'll use a simple approach, but you can replace this with:
+            # - OpenAI GPT models
+            # - Hugging Face transformers
+            # - Local models like Llama, Mistral, etc.
+            
+            answer = self._call_language_model(prompt, question)
+            
+            # Post-process the answer
+            processed_answer, confidence = self.prompt_service.post_process_answer(
+                answer, context_results
+            )
+            
+            self.logger.info(f"Generated answer using {prompt_type.value} prompt type")
+            return processed_answer, confidence
+            
+        except Exception as e:
+            self.logger.error(f"Failed to generate answer: {str(e)}")
+            # Fallback to simple approach
+            return self._generate_fallback_answer(question, context_results)
+    
+    def _call_language_model(self, prompt: str, question: str) -> str:
+        """
+        Call the language model to generate an answer.
+        
+        Args:
+            prompt: Formatted prompt for the language model
+            question: Original user question
+            
+        Returns:
+            Generated answer
+        """
+        try:
+            # Use the language model service to generate the answer
+            answer = self.language_model.generate(
+                prompt,
+                temperature=self.prompt_service.config.temperature,
+                max_tokens=self.prompt_service.config.max_answer_length
+            )
+            
+            return answer
+            
+        except Exception as e:
+            self.logger.error(f"Language model generation failed: {str(e)}")
+            # Fallback to simple answer generation
+            return self._generate_simple_answer(prompt, question)
+    
+    def _generate_simple_answer(self, prompt: str, question: str) -> str:
+        """
+        Generate a simple answer when LLM is not available.
+        
+        Args:
+            prompt: The full prompt
+            question: User question
+            
+        Returns:
+            Simple answer
+        """
+        # Extract context from the prompt
+        context_start = prompt.find("Context Information:")
+        context_end = prompt.find("Question:")
+        
+        if context_start != -1 and context_end != -1:
+            context = prompt[context_start:context_end].replace("Context Information:", "").strip()
+            
+            # Simple answer based on context
+            if "summarize" in question.lower():
+                return f"Here's a summary of the key information: {context[:500]}..."
+            elif "compare" in question.lower():
+                return f"Based on the provided context, here are the key points for comparison: {context[:400]}..."
+            elif "analyze" in question.lower():
+                return f"Analysis of the information: {context[:400]}..."
+            else:
+                return f"Based on the document content: {context[:400]}..."
+        
+        return "I found some relevant information, but I need a language model to provide a proper answer."
+    
+    def _generate_fallback_answer(self, question: str, context_results: List[Dict[str, Any]]) -> tuple[str, float]:
+        """
+        Generate a fallback answer when the main generation fails.
+        
+        Args:
+            question: User question
+            context_results: Retrieved context chunks
+            
+        Returns:
+            Tuple of (answer, confidence_score)
+        """
+        if not context_results:
+            return "I couldn't find any relevant information to answer your question.", 0.0
         
         # Sort by similarity score
-        sorted_results = sorted(context_results, key=lambda x: x['similarity_score'], reverse=True)
+        sorted_results = sorted(context_results, key=lambda x: x.get('similarity_score', 0), reverse=True)
         
         # Take top chunks and combine
-        top_chunks = sorted_results[:3]  # Use top 3 chunks
-        combined_text = "\n\n".join([chunk['text'] for chunk in top_chunks])
+        top_chunks = sorted_results[:3]
+        combined_text = "\n\n".join([chunk.get('text', '') for chunk in top_chunks])
         
         # Calculate average confidence
-        avg_confidence = sum(chunk['similarity_score'] for chunk in top_chunks) / len(top_chunks)
+        avg_confidence = sum(chunk.get('similarity_score', 0) for chunk in top_chunks) / len(top_chunks)
         
-        # Simple answer generation - in production, use a proper language model
-        answer = f"Based on the document content:\n\n{combined_text}"
+        # Simple answer generation
+        answer = f"Based on the document content:\n\n{combined_text[:800]}..."
         
         return answer, min(avg_confidence, 1.0)
     
