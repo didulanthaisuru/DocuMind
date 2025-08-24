@@ -33,7 +33,7 @@ This project uses environment variables for sensitive configuration like API key
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
+    subgraph Frontend["Frontend Layer"]
         A[React 18 + TypeScript]
         A1[Document Upload Component]
         A2[Query Interface Component]
@@ -46,7 +46,7 @@ graph TB
         A --> A4
     end
     
-    subgraph "API Gateway Layer"
+    subgraph API["API Gateway Layer"]
         B[FastAPI Server]
         B1[Request Validation]
         B2[CORS Middleware]
@@ -59,7 +59,7 @@ graph TB
         B --> B4
     end
     
-    subgraph "Core AI Services"
+    subgraph Core["Core AI Services"]
         C[RAG Orchestration Service]
         C1[Query Processing Engine]
         C2[Context Retrieval Engine]
@@ -72,7 +72,7 @@ graph TB
         C --> C4
     end
     
-    subgraph "AI/ML Engine"
+    subgraph AI["AI/ML Engine"]
         D[Language Model Service]
         D1[Gemini AI Integration]
         D2[Intelligent Fallback Service]
@@ -103,7 +103,7 @@ graph TB
         F --> F4
     end
     
-    subgraph "Data Processing Pipeline"
+    subgraph Data["Data Processing Pipeline"]
         G[Document Intelligence Service]
         G1[Multi-format Text Extraction]
         G2[Intelligent Chunking Engine]
@@ -122,14 +122,14 @@ graph TB
         H --> H3
     end
     
-    subgraph "External AI Services"
+    subgraph External["External AI Services"]
         I[Google Gemini AI]
         I1[Content Generation API]
         I2[Safety Settings]
         I3[Token Management]
     end
     
-    subgraph "Intelligent Storage"
+    subgraph Storage["Intelligent Storage"]
         J[Document Storage]
         J1[File System Management]
         J2[Content Indexing]
