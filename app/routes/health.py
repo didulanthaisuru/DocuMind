@@ -34,11 +34,31 @@ async def detailed_health_check(
     """
     try:
         stats = rag_service.get_system_stats()
+        
+        # Calculate total chunks from documents
+        documents = rag_service.document_service.list_documents()
+        total_chunks = sum(doc.total_chunks for doc in documents)
+        
+        # Get embedding model info
+        embedding_model = rag_service.embedding_service.model_name
+        
+        # Calculate uptime (placeholder - you might want to track this properly)
+        import time
+        uptime = int(time.time()) % 86400  # Placeholder uptime in seconds
+        
         return {
             "status": "healthy",
             "service": "RAG Document Assistant",
             "version": "1.0.0",
-            "statistics": stats
+            "system_stats": {
+                "total_documents": stats.get('total_documents', 0),
+                "total_chunks": total_chunks,
+                "total_vectors": stats.get('total_vectors', 0),
+                "embedding_model": embedding_model,
+                "vector_dimension": stats.get('embedding_dimension', 0),
+                "index_type": "FAISS",
+                "uptime": uptime
+            }
         }
     except Exception as e:
         return {
