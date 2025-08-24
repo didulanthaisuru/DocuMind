@@ -23,9 +23,12 @@ class Settings(BaseSettings):
     # === Model Configuration ===
     EMBEDDING_MODEL: str = "sentence-transformers/all-mpnet-base-v2"
     GENERATION_MODEL: str = "microsoft/DialoGPT-medium"
-    LANGUAGE_MODEL_PROVIDER: str = "mock"  # "openai", "huggingface", "mock"
+    LANGUAGE_MODEL_PROVIDER: str = "gemini"  # "openai", "huggingface", "mock", "gemini"
     USE_GPU: bool = False
     DEVICE: str = "cuda" if USE_GPU else "cpu"
+    
+    # === API Keys ===
+    GEMINI_API_KEY: str = "AIzaSyA_Z8gMmZrpZmI81BtTJoDtPbLv88QZsSA"
     
     # === Document Processing ===
     MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB

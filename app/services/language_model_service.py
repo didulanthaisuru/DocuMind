@@ -246,6 +246,78 @@ class MockLanguageModelService(LanguageModelInterface):
             return "Document structure, academic guidelines, and program requirements"
 
 
+class GeminiService(LanguageModelInterface):
+    """Google Gemini model service."""
+    
+    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-pro"):
+        """
+        Initialize Gemini service.
+        
+        Args:
+            api_key: Gemini API key (will use environment variable if not provided)
+            model: Model to use (gemini-pro, gemini-pro-vision, etc.)
+        """
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        self.model = model
+        self.logger = setup_logger(self.__class__.__name__)
+        self._client = None
+    
+    def is_available(self) -> bool:
+        """Check if Gemini is configured."""
+        return bool(self.api_key)
+    
+    def _get_client(self):
+        """Get or create the Gemini client."""
+        if self._client is None:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=self.api_key)
+                self._client = genai.GenerativeModel(self.model)
+            except ImportError:
+                raise ImportError("Google Generative AI package not installed. Run: pip install google-generativeai")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize Gemini client: {str(e)}")
+                raise
+        
+        return self._client
+    
+    def generate(self, prompt: str, **kwargs) -> str:
+        """
+        Generate text using Gemini API.
+        
+        Args:
+            prompt: Input prompt
+            **kwargs: Additional parameters (temperature, max_tokens, etc.)
+            
+        Returns:
+            Generated text
+        """
+        if not self.is_available():
+            raise ValueError("Gemini API key not configured")
+        
+        try:
+            client = self._get_client()
+            
+            # Set default parameters
+            generation_config = {
+                "temperature": kwargs.get("temperature", 0.7),
+                "max_output_tokens": kwargs.get("max_tokens", 1000),
+                "top_p": kwargs.get("top_p", 0.9),
+                "top_k": kwargs.get("top_k", 40),
+            }
+            
+            response = client.generate_content(prompt, generation_config=generation_config)
+            
+            if response.text:
+                return response.text
+            else:
+                raise ValueError("Empty response from Gemini API")
+                
+        except Exception as e:
+            self.logger.error(f"Gemini API error: {str(e)}")
+            raise
+
+
 class LanguageModelService:
     """
     Unified language model service that can work with different providers.
@@ -267,6 +339,8 @@ class LanguageModelService:
             self.model = OpenAIService(**kwargs)
         elif self.provider == "huggingface":
             self.model = HuggingFaceService(**kwargs)
+        elif self.provider == "gemini":
+            self.model = GeminiService(**kwargs)
         elif self.provider == "mock":
             self.model = MockLanguageModelService()
         else:
