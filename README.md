@@ -191,6 +191,8 @@ graph TB
     class G,G1,G2,G3,H,H1,H2,H3 data
     class I,I1,I2,I3 external
     class J,J1,J2,K,K1,K2,K3,L,L1,L2,L3 storage
+```
+```
 
 
 ## Detailed AI Architecture
