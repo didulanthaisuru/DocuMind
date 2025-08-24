@@ -115,7 +115,11 @@ class RAGService:
             query_embedding = self.embedding_service.embed_query(query_request.question)
             
             # Search for relevant chunks (increase k for better context)
-            search_k = max(query_request.top_k * 2, 10)  # Get more chunks for better context
+            # For abstract/summary requests, get more context
+            if any(keyword in query_request.question.lower() for keyword in ['abstract', 'summary', 'summarize', 'overview']):
+                search_k = max(query_request.top_k * 4, 15)  # Get even more chunks for comprehensive summaries
+            else:
+                search_k = max(query_request.top_k * 2, 10)  # Get more chunks for better context
             scores, results_metadata = self.vector_service.search(
                 query_embedding=query_embedding,
                 k=search_k,
@@ -128,7 +132,8 @@ class RAGService:
                     answer="I couldn't find any relevant information to answer your question.",
                     confidence=0.0,
                     sources=[],
-                    processing_time=time.time() - start_time
+                    processing_time=time.time() - start_time,
+                    total_sources_found=0
                 )
             
             # Enrich context results with document information
@@ -149,9 +154,11 @@ class RAGService:
                         source = SourceInfo(
                             document_id=result['document_id'],
                             filename=document.filename,
-                            page=result.get('page'),
-                            chunk_text=result['text'][:500] + "..." if len(result['text']) > 500 else result['text'],
-                            similarity_score=result['similarity_score']
+                            chunk_id=result.get('chunk_id', 'unknown'),
+                            text=result['text'][:500] + "..." if len(result['text']) > 500 else result['text'],
+                            similarity_score=result['similarity_score'],
+                            start_index=result.get('start_char', 0),
+                            end_index=result.get('end_char', len(result['text']))
                         )
                         sources.append(source)
             
@@ -161,7 +168,8 @@ class RAGService:
                 answer=answer,
                 confidence=confidence,
                 sources=sources,
-                processing_time=processing_time
+                processing_time=processing_time,
+                total_sources_found=len(sources)
             )
             
             self.logger.info(f"Query processed successfully in {processing_time:.2f}s "
@@ -257,6 +265,7 @@ class RAGService:
             Enriched context results with document details
         """
         enriched_results = []
+        seen_chunks = set()  # Track unique chunks to avoid duplicates
         
         for result in results_metadata:
             # Get full document information
@@ -271,9 +280,51 @@ class RAGService:
                 enriched_result['filename'] = f"Document {result.get('document_id', 'Unknown')}"
                 enriched_result['document_title'] = enriched_result['filename']
             
-            enriched_results.append(enriched_result)
+            # Clean and enhance the text content
+            text = enriched_result.get('text', '')
+            if text:
+                # Clean the text
+                text = self._clean_text(text)
+                enriched_result['text'] = text
+                
+                # Track unique chunks (based on chunk_id to avoid duplicates)
+                chunk_id = enriched_result.get('chunk_id', '')
+                if chunk_id not in seen_chunks:
+                    seen_chunks.add(chunk_id)
+                    enriched_results.append(enriched_result)
+        
+        # Limit to top 8 unique chunks for better context management
+        enriched_results = enriched_results[:8]
         
         return enriched_results
+    
+    def _clean_text(self, text: str) -> str:
+        """
+        Clean and format text content for better processing.
+        
+        Args:
+            text: Raw text content
+            
+        Returns:
+            Cleaned text
+        """
+        if not text:
+            return text
+        
+        # Remove excessive whitespace
+        text = ' '.join(text.split())
+        
+        # Remove common artifacts
+        text = text.replace('...', ' ')
+        text = text.replace('..', ' ')
+        
+        # Clean up punctuation
+        text = text.replace(' ,', ',')
+        text = text.replace(' .', '.')
+        text = text.replace(' ;', ';')
+        text = text.replace(' :', ':')
+        
+        return text.strip()
 
     def _generate_simple_answer(self, prompt: str, question: str) -> str:
         """

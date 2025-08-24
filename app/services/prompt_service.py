@@ -268,19 +268,23 @@ Question: {question}
 
 Instructions:
 1. **Create a comprehensive summary** that directly addresses the question and covers all key content.
-2. **Structure your summary logically** with clear sections and flow.
-3. **Include all major themes and topics** discussed in the document.
-4. **Highlight key findings, conclusions, and important insights**.
-5. **Maintain factual accuracy** - only include information present in the context.
-6. **Use professional, academic language** appropriate for document analysis.
-7. **Include specific examples and details** that support the main points.
-8. **Organize information hierarchically** - main points first, then supporting details.
-9. **Keep the summary under {max_length} characters** while being thorough.
-10. **If summarizing a specific section**, focus on that content while providing context.
-11. **Include source citations** for key information when relevant.
-12. **Focus on the most relevant information** from the context provided.
-13. **Provide a clear, coherent narrative** that flows logically.
-14. **Highlight any important data, statistics, or key points** mentioned in the document.
+2. **For abstract requests**: Focus on the main research objectives, methodology, key findings, and conclusions. Structure as a proper academic abstract.
+3. **For general summaries**: Include all major themes, topics, and key insights from the document.
+4. **Structure your response logically** with clear sections and flow.
+5. **Include all major themes and topics** discussed in the document.
+6. **Highlight key findings, conclusions, and important insights**.
+7. **Maintain factual accuracy** - only include information present in the context.
+8. **Use professional, academic language** appropriate for document analysis.
+9. **Include specific examples and details** that support the main points.
+10. **Organize information hierarchically** - main points first, then supporting details.
+11. **Keep the summary under {max_length} characters** while being thorough and comprehensive.
+12. **If summarizing a specific section**, focus on that content while providing context.
+13. **Include source citations** for key information when relevant.
+14. **Focus on the most relevant information** from the context provided.
+15. **Provide a clear, coherent narrative** that flows logically.
+16. **Highlight any important data, statistics, or key points** mentioned in the document.
+17. **For abstract requests**: Include research background, objectives, methods, results, and implications.
+18. **Be comprehensive but concise** - cover all important aspects without being overly verbose.
 
 Summary:"""
     
@@ -377,7 +381,7 @@ Answer:"""
         question_lower = question.lower()
         
         # Summarization keywords (check first for better priority)
-        summary_keywords = ['summarize', 'summary', 'overview', 'brief', 'sum up', 'give summary', 'provide summary', 'document summary']
+        summary_keywords = ['summarize', 'summary', 'overview', 'brief', 'sum up', 'give summary', 'provide summary', 'document summary', 'abstract', 'give abstract', 'provide abstract', 'what is the abstract', 'extract abstract']
         if any(keyword in question_lower for keyword in summary_keywords):
             return PromptType.SUMMARIZATION
         

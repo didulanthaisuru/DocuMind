@@ -12,9 +12,11 @@ class SourceInfo(BaseModel):
     """Source information for query results"""
     document_id: str
     filename: str
-    page: Optional[int]
-    chunk_text: str
+    chunk_id: str
+    text: str
     similarity_score: float
+    start_index: int
+    end_index: int
 
 class QueryResponse(BaseModel):
     """Response model for document queries"""
@@ -22,4 +24,5 @@ class QueryResponse(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
     sources: List[SourceInfo] = Field(default_factory=list)
     processing_time: float = Field(..., description="Query processing time in seconds")
+    total_sources_found: int = Field(..., description="Total number of sources found")
     tokens_used: Optional[int] = Field(None, description="Number of tokens used") 

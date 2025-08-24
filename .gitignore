@@ -303,8 +303,8 @@ models/saved/
 *.pdf
 *.docx
 *.doc
-*.txt
-*.md
+
+
 uploads/
 uploads\/
 
