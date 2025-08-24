@@ -2,6 +2,33 @@
 
 A sophisticated Retrieval-Augmented Generation (RAG) system built with FastAPI that provides intelligent document analysis and question-answering capabilities powered by Google Gemini AI and advanced vector search technologies.
 
+## Environment Setup
+
+### API Keys Configuration
+
+This project uses environment variables for sensitive configuration like API keys. Follow these steps to set up your environment:
+
+1. **Create a `.env` file** in the project root:
+   ```bash
+   # API Keys (Keep this file private - do not commit to GitHub)
+   GEMINI_API_KEY=your_actual_gemini_api_key_here
+   ```
+
+2. **Get your Gemini API key**:
+   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Create a new API key
+   - Copy the key to your `.env` file
+
+3. **Security Note**: 
+   - The `.env` file is already in `.gitignore` and will not be committed to GitHub
+   - The `config.env` file contains public configuration settings
+   - Never commit API keys to version control
+
+### Configuration Files
+
+- **`.env`**: Private file for sensitive data (API keys) - **NOT committed to Git**
+- **`config.env`**: Public configuration template - **committed to Git**
+
 ## System Architecture Overview
 
 ```mermaid
