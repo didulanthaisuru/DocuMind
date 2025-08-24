@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     DEVICE: str = "cuda" if USE_GPU else "cpu"
     
     # === API Keys ===
-    GEMINI_API_KEY: str = "AIzaSyA_Z8gMmZrpZmI81BtTJoDtPbLv88QZsSA"
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "AIzaSyA_Z8gMmZrpZmI81BtTJoDtPbLv88QZsSA")
     
     # === Document Processing ===
     MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     METADATA_FILE: Path = METADATA_DIR / "documents.json"
     
     class Config:
-        env_file = ".env"
+        env_file = "config.env"
         case_sensitive = True
 
     def __init__(self, **kwargs):

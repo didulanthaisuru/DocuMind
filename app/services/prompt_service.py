@@ -526,6 +526,16 @@ Answer:"""
         answer = re.sub(r'\d+ Time Series Splitting.*?This ensures.*?appointments\.', '', answer, flags=re.DOTALL)
         answer = re.sub(r'Page \d+.*?Feature Set Finalization.*?Final Features.*?The f\.\.\.', '', answer, flags=re.DOTALL)
         
+        # Remove specific artifacts we're seeing
+        answer = re.sub(r'Based on the document content:.*?\.\.\.', '', answer, flags=re.DOTALL)
+        answer = re.sub(r'ayment - August Monthly Rent.*?Entertainment', '', answer, flags=re.DOTALL)
+        answer = re.sub(r'Rule-based mapping.*?\.\.\.', '', answer, flags=re.DOTALL)
+        answer = re.sub(r',lool$', '', answer)  # Remove trailing artifacts
+        answer = re.sub(r'\.\.\.$', '', answer)  # Remove trailing ellipsis
+        
+        # Remove any remaining page references
+        answer = re.sub(r'Page \d+.*?\.', '', answer, flags=re.DOTALL)
+        
         # If the answer is very short or seems incomplete, try to improve it
         if len(answer) < 100:
             # Add a more complete ending
