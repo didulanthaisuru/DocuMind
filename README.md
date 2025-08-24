@@ -63,7 +63,6 @@ graph TB
     C --> H
     C --> I
 ```
-```
 
 
 ## Detailed AI Architecture
@@ -115,7 +114,7 @@ sequenceDiagram
     R-->>B: Structured Response
     B-->>F: Answer with Sources & Confidence
 ```
-```
+
 ### 2. Document Intelligence Pipeline
 
 ```mermaid
