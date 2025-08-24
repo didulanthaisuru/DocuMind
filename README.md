@@ -115,7 +115,7 @@ sequenceDiagram
     R-->>B: Structured Response
     B-->>F: Answer with Sources & Confidence
 ```
-
+```
 ### 2. Document Intelligence Pipeline
 
 ```mermaid
