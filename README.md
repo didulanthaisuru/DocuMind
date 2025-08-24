@@ -29,62 +29,169 @@ This project uses environment variables for sensitive configuration like API key
 - **`.env`**: Private file for sensitive data (API keys) - **NOT committed to Git**
 - **`config.env`**: Public configuration template - **committed to Git**
 
-## System Architecture
+## System Architecture Overview
 
 ```mermaid
 graph TB
-    subgraph "Frontend"
-        A[React App]
+    subgraph Frontend["Frontend Layer"]
+        A[React 18 + TypeScript]
+        A1[Document Upload Component]
+        A2[Query Interface Component]
+        A3[Results Display Component]
+        A4[Document Management Component]
+        
+        A --> A1
+        A --> A2
+        A --> A3
+        A --> A4
     end
     
-    subgraph "Backend"
+    subgraph API["API Gateway Layer"]
         B[FastAPI Server]
-        C[RAG Service]
+        B1[Request Validation]
+        B2[CORS Middleware]
+        B3[Rate Limiting]
+        B4[Error Handling]
+        
+        B --> B1
+        B --> B2
+        B --> B3
+        B --> B4
+    end
+    
+    subgraph Core["Core AI Services"]
+        C[RAG Orchestration Service]
+        C1[Query Processing Engine]
+        C2[Context Retrieval Engine]
+        C3[Answer Generation Engine]
+        C4[Confidence Scoring Engine]
+        
+        C --> C1
+        C --> C2
+        C --> C3
+        C --> C4
+    end
+    
+    subgraph AI["AI/ML Engine"]
         D[Language Model Service]
-        E[Vector Service]
+        D1[Gemini AI Integration]
+        D2[Intelligent Fallback Service]
+        D3[Rate Limit Handler]
+        
+        E[Advanced Prompt Engineering]
+        E1[Prompt Type Detection]
+        E2[Template Selection Engine]
+        E3[Context Formatting]
+        E4[Source Citation Engine]
+        
+        F[Vector Intelligence Service]
+        F1[FAISS Index Management]
+        F2[Similarity Search Engine]
+        F3[Embedding Optimization]
+        F4[Metadata Integration]
+        
+        D --> D1
+        D --> D2
+        D --> D3
+        E --> E1
+        E --> E2
+        E --> E3
+        E --> E4
+        F --> F1
+        F --> F2
+        F --> F3
+        F --> F4
     end
     
-    subgraph "External Services"
-        F[Gemini AI]
-        G[FAISS Vector Store]
+    subgraph Data["Data Processing Pipeline"]
+        G[Document Intelligence Service]
+        G1[Multi-format Text Extraction]
+        G2[Intelligent Chunking Engine]
+        G3[Content Analysis Engine]
+        
+        H[Embedding Intelligence Service]
+        H1[Sentence Transformers Model]
+        H2[Vector Normalization]
+        H3[Semantic Analysis]
+        
+        G --> G1
+        G --> G2
+        G --> G3
+        H --> H1
+        H --> H2
+        H --> H3
     end
     
-    subgraph "Storage"
-        H[Document Storage]
-        I[Metadata Storage]
+    subgraph External["External AI Services"]
+        I[Google Gemini AI]
+        I1[Content Generation API]
+        I2[Safety Settings]
+        I3[Token Management]
     end
     
-    A <--> B
+    subgraph Storage["Intelligent Storage"]
+        J[Document Storage]
+        J1[File System Management]
+        J2[Content Indexing]
+        
+        K[Vector Database]
+        K1[FAISS Index Files]
+        K2[Optimized Embeddings]
+        K3[Search Indices]
+        
+        L[Metadata Intelligence]
+        L1[Document Metadata]
+        L2[Chunk Information]
+        L3[Search Analytics]
+        
+        J --> J1
+        J --> J2
+        K --> K1
+        K --> K2
+        K --> K3
+        L --> L1
+        L --> L2
+        L --> L3
+    end
+    
+    %% Connections
+    A1 --> B
+    A2 --> B
+    A3 --> B
+    A4 --> B
+    
     B --> C
-    C --> D
-    C --> E
-    D --> F
-    E --> G
-    C --> H
-    C --> I
-```
-,,
-    participant U as User
-    participant F as Frontend
-    participant B as Backend
-    participant R as RAG Service
-    participant V as Vector Service
-    participant S as Storage
+    C1 --> D
+    C1 --> E
+    C2 --> F
     
-    U->>F: Upload Document
-    F->>B: POST /documents/upload
-    B->>R: Process Document
-    R->>R: File Validation
-    R->>R: Text Extraction
-    R->>R: Text Chunking
-    R->>R: Embedding Generation
-    R->>V: Store Embeddings
-    V-->>R: Confirmation
-    R->>S: Store Metadata
-    S-->>R: Document ID
-    R-->>B: Success Response
-    B-->>F: Document Uploaded
-```
+    G --> H
+    H --> F
+    
+    D1 --> I
+    F1 --> K
+    
+    G --> J
+    G --> L
+    F --> K
+    
+    %% Styling
+    classDef frontend fill:#e3f2fd
+    classDef api fill:#f3e5f5
+    classDef core fill:#fff8e1
+    classDef ai fill:#e8f5e8
+    classDef data fill:#fce4ec
+    classDef external fill:#f1f8e9
+    classDef storage fill:#fafafa
+    
+    class A,A1,A2,A3,A4 frontend
+    class B,B1,B2,B3,B4 api
+    class C,C1,C2,C3,C4 core
+    class D,D1,D2,D3,E,E1,E2,E3,E4,F,F1,F2,F3,F4 ai
+    class G,G1,G2,G3,H,H1,H2,H3 data
+    class I,I1,I2,I3 external
+    class J,J1,J2,K,K1,K2,K3,L,L1,L2,L3 storage
+
 
 ## Detailed AI Architecture
 
