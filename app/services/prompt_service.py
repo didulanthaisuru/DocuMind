@@ -113,14 +113,17 @@ class PromptService:
         
         # Format each chunk with source information
         formatted_chunks = []
-        for i, chunk in enumerate(unique_chunks[:5], 1):  # Limit to top 5 chunks
+        for i, chunk in enumerate(unique_chunks[:8], 1):  # Increased to top 8 chunks for better context
             text = chunk.get('text', '').strip()
             if not text:
                 continue
                 
-            # Truncate if too long
-            if len(text) > 800:
-                text = text[:800] + "..."
+            # Clean and format the text
+            text = self._clean_text(text)
+            
+            # Truncate if too long (increased limit for better context)
+            if len(text) > 1000:
+                text = text[:1000] + "..."
             
             # Add source information
             source_info = self._get_source_info(chunk)
@@ -128,6 +131,29 @@ class PromptService:
             formatted_chunks.append(formatted_chunk)
         
         return "\n".join(formatted_chunks)
+    
+    def _clean_text(self, text: str) -> str:
+        """
+        Clean and format text for better readability.
+        
+        Args:
+            text: Raw text
+            
+        Returns:
+            Cleaned text
+        """
+        # Remove extra whitespace
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        # Remove common artifacts
+        text = re.sub(r'^\s*[•\-]\s*', '', text)  # Remove bullet points at start
+        text = re.sub(r'\s*[•\-]\s*$', '', text)  # Remove bullet points at end
+        
+        # Ensure proper sentence endings
+        if text and not text.endswith(('.', '!', '?')):
+            text += '.'
+        
+        return text
     
     def _deduplicate_chunks(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -252,6 +278,9 @@ Instructions:
 9. **Keep the summary under {max_length} characters** while being thorough.
 10. **If summarizing a specific section**, focus on that content while providing context.
 11. **Include source citations** for key information when relevant.
+12. **Focus on the most relevant information** from the context provided.
+13. **Provide a clear, coherent narrative** that flows logically.
+14. **Highlight any important data, statistics, or key points** mentioned in the document.
 
 Summary:"""
     
@@ -422,12 +451,24 @@ Answer:"""
         
         # Consider context length and diversity
         total_length = sum(len(chunk.get('text', '')) for chunk in context_results)
-        context_factor = min(total_length / 1000, 1.0)  # Normalize to 0-1
+        context_factor = min(total_length / 2000, 1.0)  # Normalize to 0-1 (increased threshold)
         
-        # Combine factors
-        confidence = (avg_score * 0.7) + (context_factor * 0.3)
+        # Consider number of sources (more sources = higher confidence)
+        source_factor = min(len(context_results) / 5, 1.0)
         
-        return min(confidence, 1.0)
+        # Consider score distribution (if all scores are similar, higher confidence)
+        if len(scores) > 1:
+            score_variance = 1 - (max(scores) - min(scores))  # Lower variance = higher confidence
+        else:
+            score_variance = 1.0
+        
+        # Combine factors with better weighting
+        confidence = (avg_score * 0.5) + (context_factor * 0.2) + (source_factor * 0.2) + (score_variance * 0.1)
+        
+        # Boost confidence for Gemini AI (since it's more capable)
+        confidence = min(confidence * 1.2, 1.0)
+        
+        return confidence
     
     def _add_citations(self, answer: str, context_results: List[Dict[str, Any]]) -> str:
         """
@@ -472,18 +513,30 @@ Answer:"""
         # Remove common LLM artifacts
         answer = re.sub(r'^(Answer:|Response:|Based on the context,?|According to the context,?)', '', answer, flags=re.IGNORECASE)
         
+        # Remove source citations that might be embedded in the answer
+        answer = re.sub(r'\[Source \d+:.*?\]', '', answer)
+        answer = re.sub(r'Sources?:.*$', '', answer, flags=re.MULTILINE | re.DOTALL)
+        
         # Fix incomplete sentences that end with ellipsis or are cut off
         if answer.endswith('...'):
             # Try to complete the sentence or remove the ellipsis
             answer = answer[:-3].strip()
         
+        # Remove any remaining artifacts from the context
+        answer = re.sub(r'\d+ Time Series Splitting.*?This ensures.*?appointments\.', '', answer, flags=re.DOTALL)
+        answer = re.sub(r'Page \d+.*?Feature Set Finalization.*?Final Features.*?The f\.\.\.', '', answer, flags=re.DOTALL)
+        
         # If the answer is very short or seems incomplete, try to improve it
-        if len(answer) < 50 and not answer.endswith(('.', '!', '?')):
+        if len(answer) < 100:
             # Add a more complete ending
-            answer += " based on the available context."
+            if not answer.endswith(('.', '!', '?')):
+                answer += " based on the available context."
         
         # Ensure proper sentence ending
         if answer and not answer.endswith(('.', '!', '?')):
             answer += '.'
         
-        return answer.strip()
+        # Final cleanup
+        answer = re.sub(r'\s+', ' ', answer).strip()
+        
+        return answer

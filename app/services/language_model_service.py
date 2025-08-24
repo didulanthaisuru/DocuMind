@@ -298,15 +298,39 @@ class GeminiService(LanguageModelInterface):
         try:
             client = self._get_client()
             
-            # Set default parameters
+            # Set default parameters optimized for document analysis
             generation_config = {
-                "temperature": kwargs.get("temperature", 0.7),
-                "max_output_tokens": kwargs.get("max_tokens", 1000),
-                "top_p": kwargs.get("top_p", 0.9),
+                "temperature": kwargs.get("temperature", 0.3),  # Lower temperature for more focused responses
+                "max_output_tokens": kwargs.get("max_tokens", 1500),  # Increased for better summaries
+                "top_p": kwargs.get("top_p", 0.8),
                 "top_k": kwargs.get("top_k", 40),
             }
             
-            response = client.generate_content(prompt, generation_config=generation_config)
+            # Add safety settings for better content generation
+            safety_settings = [
+                {
+                    "category": "HARM_CATEGORY_HARASSMENT",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    "category": "HARM_CATEGORY_HATE_SPEECH",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                }
+            ]
+            
+            response = client.generate_content(
+                prompt, 
+                generation_config=generation_config,
+                safety_settings=safety_settings
+            )
             
             if response.text:
                 return response.text

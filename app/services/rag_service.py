@@ -114,10 +114,11 @@ class RAGService:
             # Generate query embedding
             query_embedding = self.embedding_service.embed_query(query_request.question)
             
-            # Search for relevant chunks
+            # Search for relevant chunks (increase k for better context)
+            search_k = max(query_request.top_k * 2, 10)  # Get more chunks for better context
             scores, results_metadata = self.vector_service.search(
                 query_embedding=query_embedding,
-                k=query_request.top_k,
+                k=search_k,
                 document_ids=query_request.document_ids
             )
             
