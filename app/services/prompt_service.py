@@ -184,8 +184,8 @@ class PromptService:
         return " | ".join(source_parts)
     
     def _get_general_qa_template(self) -> str:
-        """Get template for general Q&A prompts."""
-        return """You are a helpful AI assistant that answers questions based on the provided context. 
+        """Get template for general Q&A prompts optimized for Gemini AI."""
+        return """You are an expert AI assistant powered by Google's Gemini AI. Your task is to provide accurate, well-reasoned answers based on the provided document context.
 
 Context Information:
 {context}
@@ -193,20 +193,22 @@ Context Information:
 Question: {question}
 
 Instructions:
-1. Answer the question based ONLY on the information provided in the context above.
-2. If the context doesn't contain enough information to answer the question, say "I don't have enough information to answer this question."
-3. Be concise but comprehensive in your response.
-4. Provide a clear, structured answer that directly addresses the question.
-5. If you reference specific information, mention the source.
-6. Keep your answer under {max_length} characters.
-7. Be accurate and avoid making up information not present in the context.
-8. For questions about topics or content, identify and list the main themes or subjects discussed.
+1. **Base your answer ONLY on the information provided in the context above.**
+2. **Be precise and factual** - avoid speculation or information not present in the context.
+3. **Structure your response clearly** with logical flow and organization.
+4. **Cite specific sources** when referencing information (e.g., "According to Source 1...").
+5. **If the context is insufficient**, clearly state: "I don't have enough information in the provided context to answer this question completely."
+6. **For complex questions**, break down your response into clear sections.
+7. **Maintain academic/professional tone** appropriate for document analysis.
+8. **Keep your answer under {max_length} characters** while being comprehensive.
+9. **Highlight key insights** and important findings from the context.
+10. **If asked for summaries**, focus on main themes, key points, and conclusions.
 
 Answer:"""
     
     def _get_analytical_template(self) -> str:
-        """Get template for analytical questions."""
-        return """You are an analytical AI assistant that provides detailed analysis based on the provided context.
+        """Get template for analytical questions optimized for Gemini AI."""
+        return """You are an expert analytical AI powered by Google's Gemini AI. Provide deep, insightful analysis based on the provided document context.
 
 Context Information:
 {context}
@@ -214,19 +216,24 @@ Context Information:
 Question: {question}
 
 Instructions:
-1. Provide a thorough analysis of the question using the context provided.
-2. Identify key points, patterns, and relationships in the information.
-3. Consider multiple perspectives if the context allows.
-4. Support your analysis with specific examples from the context.
-5. If the context is insufficient for analysis, clearly state what additional information would be needed.
-6. Keep your analysis under {max_length} characters.
-7. Cite sources when referencing specific information.
+1. **Conduct thorough analysis** using critical thinking and logical reasoning.
+2. **Identify patterns, relationships, and underlying themes** in the information.
+3. **Consider multiple perspectives and interpretations** where the context allows.
+4. **Support your analysis with specific evidence** from the context.
+5. **Apply relevant analytical frameworks** (e.g., SWOT, cause-effect, comparative analysis).
+6. **Highlight implications and consequences** of the findings.
+7. **Address potential limitations** or gaps in the available information.
+8. **Structure your analysis clearly** with logical flow and organization.
+9. **Use professional, academic language** appropriate for document analysis.
+10. **Keep your analysis under {max_length} characters** while being comprehensive.
+11. **Cite specific sources** when referencing information from the context.
+12. **If the context is insufficient**, clearly state what additional information would be needed for a complete analysis.
 
 Analysis:"""
     
     def _get_summarization_template(self) -> str:
-        """Get template for summarization tasks."""
-        return """You are a summarization AI that creates concise summaries of the provided context.
+        """Get template for summarization tasks optimized for Gemini AI."""
+        return """You are an expert document summarizer powered by Google's Gemini AI. Create comprehensive, well-structured summaries of the provided document context.
 
 Context Information:
 {context}
@@ -234,13 +241,17 @@ Context Information:
 Question: {question}
 
 Instructions:
-1. Create a comprehensive summary that addresses the question.
-2. Focus on the most important and relevant information.
-3. Maintain the key facts and relationships from the original context.
-4. Use clear, concise language.
-5. Organize the summary logically.
-6. Keep the summary under {max_length} characters.
-7. Include source information for key points.
+1. **Create a comprehensive summary** that directly addresses the question and covers all key content.
+2. **Structure your summary logically** with clear sections and flow.
+3. **Include all major themes and topics** discussed in the document.
+4. **Highlight key findings, conclusions, and important insights**.
+5. **Maintain factual accuracy** - only include information present in the context.
+6. **Use professional, academic language** appropriate for document analysis.
+7. **Include specific examples and details** that support the main points.
+8. **Organize information hierarchically** - main points first, then supporting details.
+9. **Keep the summary under {max_length} characters** while being thorough.
+10. **If summarizing a specific section**, focus on that content while providing context.
+11. **Include source citations** for key information when relevant.
 
 Summary:"""
     
@@ -336,28 +347,28 @@ Answer:"""
         """
         question_lower = question.lower()
         
-        # Analytical keywords
-        analytical_keywords = ['analyze', 'analysis', 'why', 'how', 'explain', 'interpret', 'evaluate']
-        if any(keyword in question_lower for keyword in analytical_keywords):
-            return PromptType.ANALYTICAL
-        
-        # Summarization keywords
-        summary_keywords = ['summarize', 'summary', 'overview', 'brief', 'sum up']
+        # Summarization keywords (check first for better priority)
+        summary_keywords = ['summarize', 'summary', 'overview', 'brief', 'sum up', 'give summary', 'provide summary', 'document summary']
         if any(keyword in question_lower for keyword in summary_keywords):
             return PromptType.SUMMARIZATION
         
+        # Analytical keywords
+        analytical_keywords = ['analyze', 'analysis', 'why', 'how', 'explain', 'interpret', 'evaluate', 'discuss', 'examine']
+        if any(keyword in question_lower for keyword in analytical_keywords):
+            return PromptType.ANALYTICAL
+        
         # Comparison keywords
-        comparison_keywords = ['compare', 'difference', 'similar', 'versus', 'vs', 'contrast']
+        comparison_keywords = ['compare', 'difference', 'similar', 'versus', 'vs', 'contrast', 'different', 'similarities']
         if any(keyword in question_lower for keyword in comparison_keywords):
             return PromptType.COMPARISON
         
         # Fact-checking keywords
-        fact_keywords = ['true', 'false', 'verify', 'check', 'fact', 'accurate', 'correct']
+        fact_keywords = ['true', 'false', 'verify', 'check', 'fact', 'accurate', 'correct', 'validate']
         if any(keyword in question_lower for keyword in fact_keywords):
             return PromptType.FACT_CHECKING
         
         # Extractive keywords (specific information)
-        extractive_keywords = ['what is', 'when', 'where', 'who', 'which', 'find', 'locate']
+        extractive_keywords = ['what is', 'when', 'where', 'who', 'which', 'find', 'locate', 'extract', 'specific']
         if any(keyword in question_lower for keyword in extractive_keywords):
             return PromptType.EXTRACTIVE
         
