@@ -63,8 +63,6 @@ graph TB
     C --> H
     C --> I
 ```
-
-
 ## Detailed AI Architecture
 
 ### 1. RAG Intelligence Pipeline
@@ -114,7 +112,6 @@ sequenceDiagram
     R-->>B: Structured Response
     B-->>F: Answer with Sources & Confidence
 ```
-
 ### 2. Document Intelligence Pipeline
 
 ```mermaid
@@ -155,7 +152,6 @@ sequenceDiagram
     D-->>B: Document Processing Complete
     B-->>F: Success Response with Document ID
 ```
-
 ## Advanced AI Components
 
 ### 1. Intelligent RAG Service (`rag_service.py`)
